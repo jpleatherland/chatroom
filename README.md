@@ -1,5 +1,5 @@
 # Charm Chatroom SSH Thing
-A small project using some charm features purely out of curiousity.
+A small project using some [charmbracelet](https://github.com/charmbracelet) packages ([bubbletea](https://github.com/charmbracelet/bubbletea) and [wish](https://github.com/charmbracelet/wish) so far) purely out of curiousity.
 
 ## Usage
 Build and run the main.go file passing in the ./test.db (or whichever sqlite db file) and then connect over ssh
