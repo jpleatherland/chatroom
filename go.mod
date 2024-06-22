@@ -1,4 +1,4 @@
-module github.com/jpleatherland/wishserver
+module github.com/jpleatherland/chatroom
 
 go 1.22.3
 
