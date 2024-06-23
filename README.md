@@ -9,4 +9,3 @@ Build and run the main.go file passing in the ./test.db (or whichever sqlite db 
 ## TODO
 - Make it pretty with Lipgloss etc
 - See how it works with multiple concurrent users.
-- Tidy up the project files, split things out properly
