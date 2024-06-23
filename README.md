@@ -20,10 +20,10 @@ Connect to the server over ssh e.g.
 
 ## Supporting database
 For the chat history table:  
-`CREATE TABLE ChatHistory(id INTEGER, User TEXT, TimeStamp TEXT, message TEXT, PRIMARY KEY(id))`
+`CREATE TABLE ChatHistory(id INTEGER, User TEXT, TimeStamp TEXT, message TEXT, PRIMARY KEY(id));`
 
 For the users table:  
-`CREATE TABLE Users (userid INTEGER PRIMARY KEY, username TEXT, publickey BLOB UNIQUE, authorised INTEGER)`
+`CREATE TABLE Users (userid INTEGER PRIMARY KEY, username TEXT, publickey BLOB UNIQUE, authorised INTEGER);`
 
 ## TODO
 - Make it pretty with Lipgloss etc
