@@ -28,7 +28,6 @@ func TeaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 }
 
 func initialModel(s ssh.Session, sqlConnection *sql.DB) model {
-	fmt.Println(s.PublicKey())
 	pty, _, _ := s.Pty()
 	ti := textarea.New()
 	ti.Placeholder = "Type to chat, enter to send"
