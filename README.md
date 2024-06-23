@@ -1,5 +1,5 @@
 # Charm Chatroom SSH Thing
-A small project using some [charmbracelet](https://github.com/charmbracelet) packages ([bubbletea](https://github.com/charmbracelet/bubbletea) and [wish](https://github.com/charmbracelet/wish) so far). This was created to try out the charm stuff and as a personal project for the [boot.dev](www.boot.dev) course
+A small project using some [charmbracelet](https://github.com/charmbracelet) packages ([bubbletea](https://github.com/charmbracelet/bubbletea) and [wish](https://github.com/charmbracelet/wish) so far). This was created to try out the charm stuff and as a personal project for the [boot.dev](https://www.boot.dev) course
 
 ## Usage
 Create a config.json in the root directory
