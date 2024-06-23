@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
 
@@ -23,7 +23,7 @@ func TeaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 	}
 	file := cfg.DatabaseFile
 	sqliteDatabase, _ := sql.Open("sqlite3", file)
-	return initialModel(s, sqliteDatabase), []tea.ProgramOption{tea.WithAltScreen()}
+	return initialModel(s, sqliteDatabase), []tea.ProgramOption{tea.WithAltScreen(), tea.WithMouseAllMotion()}
 }
 
 func initialModel(s ssh.Session, sqlConnection *sql.DB) model {
@@ -37,13 +37,16 @@ func initialModel(s ssh.Session, sqlConnection *sql.DB) model {
 	ti.SetHeight(1)
 	userName := s.User()
 
+	chatHistoryArea := viewport.New(pty.Window.Width-20, pty.Window.Height-5)
+
 	return model{
-		userName:      userName,
-		inputArea:     ti,
-		err:           nil,
-		chatHistory:   []string{},
-		latestMessage: 0,
-		sqlConnection: sqlConnection,
+		userName:        userName,
+		inputArea:       ti,
+		chatHistoryArea: chatHistoryArea,
+		err:             nil,
+		chatHistory:     "",
+		latestMessage:   0,
+		sqlConnection:   sqlConnection,
 	}
 }
 
@@ -51,8 +54,13 @@ func (m model) Init() tea.Cmd {
 	m.readIn()
 	return textinput.Blink
 }
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
+	var (
+		cmdIA  tea.Cmd
+		cmdCHA tea.Cmd
+		cmds   []tea.Cmd
+	)
 
 	m.readDelta()
 	switch msg := msg.(type) {
@@ -71,6 +79,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.inputArea.Reset()
 			return m, nil
+
+		case tea.KeyUp:
+			fallthrough
+		case tea.KeyDown:
+			fallthrough
+		case tea.KeyPgUp:
+			fallthrough
+		case tea.KeyPgDown:
+			m.chatHistoryArea, cmdCHA = m.chatHistoryArea.Update(msg)
+		}
+
+	case tea.MouseMsg:
+		switch msg.Button {
+		case tea.MouseButtonWheelUp:
+			fallthrough
+		case tea.MouseButtonWheelDown:
+			m.chatHistoryArea, cmdCHA = m.chatHistoryArea.Update(msg)
 		}
 
 	case errMsg:
@@ -78,12 +103,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	}
-	m.inputArea, cmd = m.inputArea.Update(msg)
-	return m, cmd
+	m.inputArea, cmdIA = m.inputArea.Update(msg)
+	cmds = append(cmds, cmdCHA, cmdIA)
+	return m, tea.Batch(cmds...)
 }
 
 func (m model) View() string {
-	chatText := fmt.Sprintf("chathistory:\n%v\n\n", strings.Join(m.chatHistory, "\n"))
+	chatText := fmt.Sprintf("chathistory:\n%v\n\n", m.chatHistoryArea.View())
 	userInput := fmt.Sprintf("%s%s\n%s\n\n%s", m.userName, "> ", m.inputArea.View(), "ctrl+c to quit")
 	return chatText + userInput
 }

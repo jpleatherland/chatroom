@@ -42,7 +42,8 @@ func (m *model) readIn() error {
 			return err
 		}
 		m.latestMessage = int(rowId)
-		m.chatHistory = append(m.chatHistory, fmt.Sprintf("%s: %s", user, message))
+		m.chatHistory = m.chatHistory + fmt.Sprintf("[%s] %s: %s \n", timeStamp, user, message)
+		m.chatHistoryArea.SetContent(m.chatHistory)
 	}
 	return nil
 }
@@ -66,7 +67,8 @@ func (m *model) readDelta() error {
 			return err
 		}
 		m.latestMessage = int(rowId)
-		m.chatHistory = append(m.chatHistory, fmt.Sprintf("[%s] %s: %s", timeStamp, user, message))
+		m.chatHistory = m.chatHistory + fmt.Sprintf("[%s] %s: %s \n", timeStamp, user, message)
+		m.chatHistoryArea.SetContent(m.chatHistory)
 	}
 	return nil
 }
