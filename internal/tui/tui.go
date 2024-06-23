@@ -64,6 +64,7 @@ func handleWindowResize(m *model, msg tea.WindowSizeMsg) {
 
 func (m model) Init() tea.Cmd {
 	m.readIn()
+	m.chatHistoryArea.GotoBottom()
 	return textinput.Blink
 }
 
@@ -93,13 +94,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.chatHistoryArea.GotoBottom()
 			return m, nil
 
-		case tea.KeyTab:
-			if m.inputArea.Height() > 2 {
-				return m, nil
-			}
-			m.inputArea.SetHeight(m.inputArea.Height() + 1)
-			m.inputArea.CursorDown()
-
+		// handle keyboard scrolling in the chat history area
 		case tea.KeyUp:
 			fallthrough
 		case tea.KeyDown:
@@ -110,6 +105,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.chatHistoryArea, cmdCHA = m.chatHistoryArea.Update(msg)
 		}
 
+	// handle mouse scrolling in the chat history area
 	case tea.MouseMsg:
 		switch msg.Button {
 		case tea.MouseButtonWheelUp:
