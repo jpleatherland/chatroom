@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"net"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jpleatherland/chatroom/internal/auth"
 	"github.com/jpleatherland/chatroom/internal/config"
 	"github.com/jpleatherland/chatroom/internal/tui"
 
@@ -23,6 +25,9 @@ import (
 
 func main() {
 	cfg, err := config.NewConfig()
+	file := cfg.DatabaseFile
+	sqliteDatabase, _ := sql.Open("sqlite3", file)
+	defer sqliteDatabase.Close()
 	if err != nil {
 		log.Error("Could not read config file", "error", err)
 		os.Exit(1)
@@ -31,6 +36,31 @@ func main() {
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(cfg.Host, cfg.Port)),
 		wish.WithHostKeyPath(cfg.HostKeyPath),
+		wish.WithPublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
+			if key.Type() != "ssh-ed25519" {
+				return false
+			}
+			authorised, err := auth.GetUser(key, sqliteDatabase)
+			if err != nil {
+				if err.Error() == "Unauthorised" {
+					return false
+				}
+				log.Error(err.Error())
+				return false
+			}
+			if authorised {
+				return true
+			}
+			if !authorised {
+				err := auth.AddUser(ctx.User(), key, sqliteDatabase)
+				if err != nil {
+					log.Error(err.Error())
+					return false
+				}
+				return true
+			}
+			return false
+		}),
 		wish.WithMiddleware(
 			bubbletea.Middleware(tui.TeaHandler),
 			activeterm.Middleware(),

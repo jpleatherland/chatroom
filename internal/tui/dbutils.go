@@ -45,7 +45,6 @@ func (m *model) readIn() error {
 		m.chatHistory = m.chatHistory + fmt.Sprintf("[%s] %s: %s \n", timeStamp, user, message)
 		m.chatHistoryArea.SetContent(m.chatHistory)
 	}
-	m.chatHistoryArea.GotoBottom()
 	return nil
 }
 
