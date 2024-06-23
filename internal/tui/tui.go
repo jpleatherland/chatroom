@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 
 	"github.com/charmbracelet/ssh"
@@ -33,11 +34,15 @@ func initialModel(s ssh.Session, sqlConnection *sql.DB) model {
 	ti.ShowLineNumbers = false
 	ti.Focus()
 	ti.CharLimit = 140
-	ti.SetWidth(pty.Window.Width - 20)
+	ti.SetWidth(pty.Window.Width)
 	ti.SetHeight(1)
 	userName := s.User()
 
-	chatHistoryArea := viewport.New(pty.Window.Width-20, pty.Window.Height-5)
+	chatHistoryArea := viewport.New(pty.Window.Width-5, pty.Window.Height-8)
+	chatHistoryArea.Style = lipgloss.NewStyle().
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderBackground(lipgloss.Color("#AAAAAA")).
+		BorderForeground(lipgloss.Color("#222222"))
 
 	return model{
 		userName:        userName,
@@ -48,6 +53,13 @@ func initialModel(s ssh.Session, sqlConnection *sql.DB) model {
 		latestMessage:   0,
 		sqlConnection:   sqlConnection,
 	}
+}
+
+func handleWindowResize(m *model, msg tea.WindowSizeMsg) {
+	m.chatHistoryArea.Width = msg.Width - 5
+	m.chatHistoryArea.Height = msg.Height - 8
+
+	m.inputArea.SetWidth(msg.Width - 5)
 }
 
 func (m model) Init() tea.Cmd {
@@ -78,7 +90,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			m.inputArea.Reset()
+			m.chatHistoryArea.GotoBottom()
 			return m, nil
+
+		case tea.KeyTab:
+			if m.inputArea.Height() > 2 {
+				return m, nil
+			}
+			m.inputArea.SetHeight(m.inputArea.Height() + 1)
+			m.inputArea.CursorDown()
 
 		case tea.KeyUp:
 			fallthrough
@@ -98,6 +118,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.chatHistoryArea, cmdCHA = m.chatHistoryArea.Update(msg)
 		}
 
+	case tea.WindowSizeMsg:
+		handleWindowResize(&m, msg)
+
 	case errMsg:
 		m.err = msg
 		return m, nil
@@ -109,7 +132,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	chatText := fmt.Sprintf("chathistory:\n%v\n\n", m.chatHistoryArea.View())
-	userInput := fmt.Sprintf("%s%s\n%s\n\n%s", m.userName, "> ", m.inputArea.View(), "ctrl+c to quit")
+	userName := lipgloss.NewStyle().SetString(m.userName).Foreground(lipgloss.Color("#FF00FF"))
+	chatText := fmt.Sprintf("%v\n\n", m.chatHistoryArea.View())
+	userInput := fmt.Sprintf("%s%s\n%s\n\n%s",
+		userName, " >", m.inputArea.View(), "ctrl+c to quit")
 	return chatText + userInput
 }
